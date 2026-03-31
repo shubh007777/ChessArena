@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessArena - Master the Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            overflow-x: hidden;
+        }
+
+        /* 3D Chess Board Styles */
+        .scene-3d {
+            perspective: 1200px;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+        }
+
+        .board-3d {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(60deg) rotateZ(-15deg);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: rotateX(60deg) rotateZ(-15deg) translateY(0px); }
+            50% { transform: rotateX(60deg) rotateZ(-15deg) translateY(-20px); }
+        }
+
+        .board-base {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 16px;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.8),
+                0 0 0 4px rgba(245, 158, 11, 0.3);
+            transform: translateZ(-20px);
+        }
+
+        .squares-3d {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            padding: 8px;
+            gap: 2px;
+        }
+
+        .square-3d {
+            border-radius: 4px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: all 0.3s ease;
+        }
+
+        .square-3d.light {
+            background: #f0d9b5;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        .square-3d.dark {
+            background: #b58863;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        .piece-3d {
+            position: absolute;
+            font-size: 2rem;
+            transform: translateZ(30px) translateX(-50%) translateY(-50%);
+            left: 50%;
+            top: 50%;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+            animation: pieceFloat 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pieceFloat {
+            0%, 100% { transform: translateZ(30px) translateX(-50%) translateY(-50%) translateY(0px); }
+            50% { transform: translateZ(35px) translateX(-50%) translateY(-50%) translateY(-5px); }
+        }
+
+        .piece-3d:nth-child(2) { animation-delay: 0.5s; }
+        .piece-3d:nth-child(3) { animation-delay: 1s; }
+        .piece-3d:nth-child(4) { animation-delay: 1.5s; }
+
+        /* Gradient Background */
+        .hero-gradient {
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(245, 158, 11, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
+        }
+
+        /* Animated Particles */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(245, 158, 11, 0.4);
+            border-radius: 50%;
+            animation: particle 20s linear infinite;
+        }
+
+        @keyframes particle {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Glass Cards */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            background: rgba(30, 41, 59, 0.8);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.2);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Glow Button */
+        .glow-btn {
+            position: relative;
+            background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .glow-btn:hover {
+            box-shadow: 0 0 40px rgba(245, 158, 11, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .glow-btn::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #8b5cf6 100%);
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            filter: blur(10px);
+        }
+
+        .glow-btn:hover::before {
+            opacity: 0.6;
+        }
+
+        /* Feature Icons */
+        .feature-icon {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* Scroll Reveal Animation */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Mode Cards */
+        .mode-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .mode-card:hover {
+            border-color: rgba(245, 158, 11, 0.5);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .mode-icon {
+            background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
+                    <i data-lucide="crown" class="h-8 w-8 text-amber-500"></i>
+                    <span class="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-600 bg-clip-text text-transparent">
+                        ChessArena
+                    </span>
+                </div>
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#features" class="text-gray-400 hover:text-white transition">Features</a>
+                    <a href="#modes" class="text-gray-400 hover:text-white transition">Game Modes</a>
+                    <a href="play.html" class="text-gray-400 hover:text-white transition">Play Now</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="play.html" class="glow-btn text-white px-6 py-2.5 rounded-full font-semibold flex items-center gap-2">
+                        <i data-lucide="play" class="w-4 h-4"></i>
+                        Start Playing
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient relative min-h-screen flex items-center pt-16 overflow-hidden">
+        <!-- Animated Particles -->
+        <div class="particles" id="particles"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- Left Content -->
+                <div class="text-center lg:text-left space-y-8 reveal active">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/50 border border-gray-700 text-sm text-gray-300">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        8 Unique Game Modes Available
+                    </div>
+                    
+                    <h1 class="text-5xl md:text-7xl font-bold leading-tight">
+                        Master the Art of
+                        <span class="gradient-text">Chess</span>
+                    </h1>
+                    
+                    <p class="text-xl text-gray-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                        Experience chess like never before. Play classic matches or explore exciting variants like Chess960, Crazyhouse, Atomic Chess and more.
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <a href="play.html" class="glow-btn text-white px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 group">
+                            <i data-lucide="play-circle" class="w-6 h-6 group-hover:scale-110 transition"></i>
+                            Play Now
+                        </a>
+                        <button onclick="scrollToModes()" class="bg-gray-800 hover:bg-gray-700 text-white px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 border border-gray-700 transition">
+                            <i data-lucide="grid-3x3" class="w-6 h-6"></i>
+                            Explore Modes
+                        </button>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="flex gap-8 justify-center lg:justify-start pt-4">
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-white">8</div>
+                            <div class="text-sm text-gray-500">Game Modes</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-white">3D</div>
+                            <div class="text-sm text-gray-500">Experience</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-white">AI</div>
+                            <div class="text-sm text-gray-500">Analysis</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Content - 3D Chess Board -->
+                <div class="flex justify-center reveal active" style="animation-delay: 0.2s;">
+                    <div class="scene-3d">
+                        <div class="board-3d">
+                            <div class="board-base"></div>
+                            <div class="squares-3d" id="chess-3d">
+                                <!-- Generated by JS -->
+                            </div>
+                            <!-- Floating Pieces -->
+                            <div class="piece-3d" style="grid-column: 4; grid-row: 4;">♔</div>
+                            <div class="piece-3d" style="grid-column: 5; grid-row: 5;">♚</div>
+                            <div class="piece-3d" style="grid-column: 3; grid-row: 6;">♛</div>
+                            <div class="piece-3d" style="grid-column: 6; grid-row: 3;">♕</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+            <i data-lucide="chevron-down" class="w-8 h-8 text-gray-500"></i>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-gray-900 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-bold mb-4">Why Choose <span class="gradient-text">ChessArena</span>?</h2>
+                <p class="text-gray-400 text-lg">Experience chess with modern features and endless variety</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="glass-card rounded-2xl p-8 reveal">
+                    <div class="feature-icon w-14 h-14 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="box" class="w-7 h-7 text-amber-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">3D Experience</h3>
+                    <p class="text-gray-400 leading-relaxed">Immersive 3D board visualization with smooth animations and realistic piece movement.</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-8 reveal" style="animation-delay: 0.1s;">
+                    <div class="feature-icon w-14 h-14 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="puzzle" class="w-7 h-7 text-amber-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">8 Game Modes</h3>
+                    <p class="text-gray-400 leading-relaxed">From Classic to Chess960, Crazyhouse to Atomic Chess - never get bored with endless variety.</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-8 reveal" style="animation-delay: 0.2s;">
+                    <div class="feature-icon w-14 h-14 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="brain" class="w-7 h-7 text-amber-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">AI Analysis</h3>
+                    <p class="text-gray-400 leading-relaxed">Real-time position analysis and move suggestions to help you improve your game.</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-8 reveal" style="animation-delay: 0.3s;">
+                    <div class="feature-icon w-14 h-14 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="timer" class="w-7 h-7 text-amber-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Timed Matches</h3>
+                    <p class="text-gray-400 leading-relaxed">10-minute blitz matches with visual timers and warnings when time is running low.</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-8 reveal" style="animation-delay: 0.4s;">
+                    <div class="feature-icon w-14 h-14 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="history" class="w-7 h-7 text-amber-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Move History</h3>
+                    <p class="text-gray-400 leading-relaxed">Complete game notation with move history tracking and the ability to undo moves.</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-8 reveal" style="animation-delay: 0.5s;">
+                    <div class="feature-icon w-14 h-14 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="palette" class="w-7 h-7 text-amber-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Customizable</h3>
+                    <p class="text-gray-400 leading-relaxed">Multiple board themes, sound effects toggle, and legal move hints for beginners.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Game Modes Section -->
+    <section id="modes" class="py-20 bg-gray-800/50 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-gray-900 via-transparent to-gray-900 pointer-events-none"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-bold mb-4">Choose Your <span class="gradient-text">Battlefield</span></h2>
+                <p class="text-gray-400 text-lg">8 unique game modes to test your strategic thinking</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="mode-card rounded-2xl p-6 cursor-pointer reveal" onclick="window.location.href='play.html?mode=standard'">
+                    <div class="text-4xl mb-4">♔</div>
+                    <h3 class="text-lg font-bold mb-2">Standard</h3>
+                    <p class="text-sm text-gray-400">Classic chess rules. The timeless game of strategy and tactics.</p>
+                </div>
+
+                <div class="mode-card rounded-2xl p-6 cursor-pointer reveal" onclick="window.location.href='play.html?mode=chess960'" style="animation-delay: 0.1s;">
+                    <div class="text-4xl mb-4 mode-icon">♕</div>
+                    <h3 class="text-lg font-bold mb-2">Chess960</h3>
+                    <p class="text-sm text-gray-400">Fischer Random. Random back rank with king between rooks.</p>
+                </div>
+
+                <div class="mode-card rounded-2xl p-6 cursor-pointer reveal" onclick="window.location.href='play.html?mode=koth'" style="animation-delay: 0.2s;">
+                    <div class="text-4xl mb-4 text-yellow-500">👑</div>
+                    <h3 class="text-lg font-bold mb-2">King of the Hill</h3>
+                    <p class="text-sm text-gray-400">Get your king to the center 4 squares to win instantly.</p>
+                </div>
+
+                <div class="mode-card rounded-2xl p-6 cursor-pointer reveal" onclick="window.location.href='play.html?mode=threecheck'" style="animation-delay: 0.3s;">
+                    <div class="text-4xl mb-4 text-red-500">⚡</div>
+                    <h3 class="text-lg font-bold mb-2">Three-check</h3>
+                    <p class="text-sm text-gray-400">First to give check 3 times wins. Aggressive gameplay.</p>
+                </div>
+
+                <div class="mode-card rounded-2xl p-6 cursor-pointer reveal" onclick="window.location.href='play.html?mode=horde'" style="animation-delay: 0.4s;">
+                    <div class="text-4xl mb-4 text-gray-400">♟</div>
+                    <h3 class="text-lg font-bold mb-2">Horde</h3>
+                    <p class="text-sm text-gray-400">White faces 36 black pawns. Survive the onslaught!</p>
+                </div>
+
+                <div class="mode-card rounded-2xl p-6 cursor-pointer reveal" onclick="window.location.href='play.html?mode=atomic'" style="animation-delay: 0.5s;">
+                    <div class="text-4xl mb-4 text-orange-500">💥</div>
+                    <h3 class="text-lg font-bold mb-2">Atomic</h3>
+                    <p class="text-sm text-gray-400">Captures cause explosions! Kings can't capture pieces.</p>
+                </div>
+
+                <div class="mode-card rounded-2xl p-6 cursor-pointer reveal" onclick="window.location.href='play.html?mode=racing'" style="animation-delay: 0.6s;">
+                    <div class="text-4xl mb-4 text-green-500">🏁</div>
+                    <h3 class="text-lg font-bold mb-2">Racing Kings</h3>
+                    <p class="text-sm text-gray-400">First king to the opposite side wins. No checks allowed!</p>
+                </div>
+
+                <div class="mode-card rounded-2xl p-6 cursor-pointer reveal" onclick="window.location.href='play.html?mode=crazyhouse'" style="animation-delay: 0.7s;">
+                    <div class="text-4xl mb-4 text-purple-500">🎯</div>
+                    <h3 class="text-lg font-bold mb-2">Crazyhouse</h3>
+                    <p class="text-sm text-gray-400">Captured pieces go to your pocket. Drop them anywhere!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 hero-gradient">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center reveal">
+            <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Test Your Skills?</h2>
+            <p class="text-xl text-gray-400 mb-8">Join thousands of players and start your chess journey today. Free to play, no signup required.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="play.html" class="glow-btn text-white px-10 py-4 rounded-xl font-bold text-lg inline-flex items-center justify-center gap-3">
+                    <i data-lucide="zap" class="w-6 h-6"></i>
+                    Start Playing Now
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 border-t border-gray-800 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="crown" class="h-6 w-6 text-amber-500"></i>
+                    <span class="text-xl font-bold text-white">ChessArena</span>
+                </div>
+                <div class="text-gray-500 text-sm">
+                    © 2026 SHUBH. All rights reserved.
+                </div>
+                <div class="flex gap-6">
+                    <a href="#" class="text-gray-400 hover:text-amber-500 transition">
+                        <i data-lucide="github" class="w-5 h-5"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-amber-500 transition">
+                        <i data-lucide="twitter" class="w-5 h-5"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-amber-500 transition">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Generate 3D board squares
+        const board3d = document.getElementById('chess-3d');
+        for (let i = 0; i < 64; i++) {
+            const square = document.createElement('div');
+            const row = Math.floor(i / 8);
+            const col = i % 8;
+            const isLight = (row + col) % 2 === 0;
+            square.className = `square-3d ${isLight ? 'light' : 'dark'}`;
+            board3d.appendChild(square);
+        }
+
+        // Generate particles
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+            particle.style.animationDelay = Math.random() * 10 + 's';
+            particlesContainer.appendChild(particle);
+        }
+
+        // Scroll reveal animation
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // Scroll to modes function
+        function scrollToModes() {
+            document.getElementById('modes').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
