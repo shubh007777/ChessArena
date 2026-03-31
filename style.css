@@ -1,0 +1,128 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* BODY (safe merge) */
+body {
+    padding: 2rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Arial", sans-serif;
+    background-color: #111827; /* dark bg for chess */
+    color: white;
+}
+
+/* CARD (optional UI) */
+.card {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 16px;
+    border: 1px solid lightgray;
+    border-radius: 16px;
+    background: #1f2937;
+}
+
+.card p:last-child {
+    margin-bottom: 0;
+}
+
+h1 {
+    font-size: 16px;
+    margin-top: 0;
+}
+
+p {
+    color: rgb(156, 163, 175);
+    font-size: 15px;
+    margin-bottom: 10px;
+    margin-top: 5px;
+}
+
+/* ================= CHESS CSS ================= */
+
+/* Chess Board Squares */
+.square {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.1s ease;
+}
+
+.square:hover {
+    filter: brightness(1.1);
+}
+
+/* Colors */
+.square.light {
+    background-color: #f0d9b5;
+}
+
+.square.dark {
+    background-color: #b58863;
+}
+
+/* Pieces */
+.piece {
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    cursor: grab;
+    user-select: none;
+    z-index: 10;
+    transition: transform 0.1s;
+}
+
+.piece:active {
+    cursor: grabbing;
+    transform: scale(1.1);
+}
+
+.piece.white {
+    color: #ffffff;
+}
+
+.piece.black {
+    color: #1a1a1a;
+}
+
+/* Selected */
+.square.selected {
+    background-color: rgba(235, 204, 90, 0.8) !important;
+}
+
+/* Legal Move */
+.square.legal-move::after {
+    content: '';
+    position: absolute;
+    width: 30%;
+    height: 30%;
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 50%;
+}
+
+/* Last move */
+.square.last-move {
+    background-color: rgba(205, 210, 106, 0.7) !important;
+}
+
+/* Check */
+.square.check {
+    background: red !important;
+}
+
+/* Captured */
+.captured-piece {
+    font-size: 1.2rem;
+    opacity: 0.7;
+}
+
+/* Move History Scroll */
+#move-history::-webkit-scrollbar {
+    width: 6px;
+}
+
+#move-history::-webkit-scrollbar-thumb {
+    background: #4b5563;
+}
